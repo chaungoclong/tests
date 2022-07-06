@@ -23,7 +23,7 @@ class Permission extends Model
     /**
      * @return BelongsToMany
      */
-    public function permissions(): BelongsToMany
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(
             Role::class,

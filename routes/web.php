@@ -15,9 +15,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::resource('users', \App\Http\Controllers\UserController::class);
+Route::resource('users', \App\Http\Controllers\UserController::class)
+    ->middleware('check_permission');
 Route::resource('test', \App\Http\Controllers\TestAbcController::class);
 
 Route::get('/', function () {
+    $user = User::first();
+    $permission = \App\Models\Permission::first();
+    $role = \App\Models\Role::first();
 
+    dd(
+        $user->getAllActions(),
+        $user->hasRole(1)
+    );
 });

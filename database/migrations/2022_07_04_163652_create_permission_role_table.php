@@ -17,7 +17,6 @@ class CreatePermissionRoleTable extends Migration
             $table->increments('id');
             $table->string('name', 100);
             $table->string('slug', 100)->unique();
-            $table->unsignedInteger('parent_id')->nullable();
             $table->boolean('status')->default(true);
             $table->string('description', 255)->nullable();
             $table->timestamps();
