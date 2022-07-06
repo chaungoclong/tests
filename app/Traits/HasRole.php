@@ -104,13 +104,17 @@ trait HasRole
      */
     public function hasAction($action): bool
     {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
         return in_array($action, $this->getAllActions());
     }
 
     /**
      * Check user has a all action
      *
-     * @param mixed ...$actions
+     * @param  mixed  ...$actions
      *
      * @return bool
      */
@@ -124,7 +128,7 @@ trait HasRole
     /**
      * Check user has a all action
      *
-     * @param mixed ...$actions
+     * @param  mixed  ...$actions
      *
      * @return bool
      */
@@ -138,7 +142,7 @@ trait HasRole
     /**
      * Check user has all permission in list
      *
-     * @param mixed ...$permissions
+     * @param  mixed  ...$permissions
      *
      * @return bool
      */
@@ -158,7 +162,7 @@ trait HasRole
     /**
      * Check user has any permission in list
      *
-     * @param mixed ...$permissions
+     * @param  mixed  ...$permissions
      *
      * @return bool
      */
@@ -184,6 +188,10 @@ trait HasRole
      */
     public function hasPermission($permission): bool
     {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
         $permission = $this->getPermissionByKey($permission);
 
         if ($permission === null) {
@@ -196,7 +204,7 @@ trait HasRole
     /**
      * Check user has all role in list
      *
-     * @param mixed ...$roles
+     * @param  mixed  ...$roles
      *
      * @return bool
      */
@@ -216,7 +224,7 @@ trait HasRole
     /**
      * Check user has any role in list
      *
-     * @param mixed ...$roles
+     * @param  mixed  ...$roles
      *
      * @return bool
      */
@@ -240,6 +248,10 @@ trait HasRole
      */
     public function hasRole($role): bool
     {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
         $role = $this->getRoleByKey($role);
 
         if ($role === null || empty($this->roles) || $this->roles->count() === 0) {

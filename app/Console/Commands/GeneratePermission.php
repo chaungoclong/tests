@@ -13,7 +13,7 @@ class GeneratePermission extends Command
      *
      * @var string
      */
-    protected $signature = 'permission:generate';
+    protected $signature = 'permission:generate {--f|force}';
 
     /**
      * The console command description.
@@ -32,65 +32,6 @@ class GeneratePermission extends Command
         parent::__construct();
     }
 
-    public function generatePermissionFromRoute()
-    {
-        $appNamespace = app()->getNamespace();
-        $routes = Route::getRoutes()->getRoutes();
-        $data = [];
-
-        foreach ($routes as $route) {
-            $actionData = $route->getAction();
-
-            if (array_key_exists('controller', $actionData)
-                && str_starts_with($actionData['controller'], $appNamespace)) {
-                $controllerAction = explode('@', $actionData['controller']);
-                $controllerNameSplit = explode('\\', $controllerAction[0]);
-
-                // Module
-                $module = str_replace('Controller', '', end($controllerNameSplit));
-                $module = ltrim(
-                    strtolower(
-                        preg_replace(
-                            '/[A-Z]([A-Z](?![a-z]))*/',
-                            ' $0',
-                            $module
-                        )
-                    ),
-                    ' '
-                );
-
-                // Action
-                $actionName = $controllerAction[1] ?? '';
-                $actionName = ltrim(
-                    strtolower(
-                        preg_replace(
-                            '/[A-Z]([A-Z](?![a-z]))*/',
-                            ' $0',
-                            $actionName
-                        )
-                    ),
-                    ' '
-                );
-
-                // Slug
-                $name = $actionName . ' ' . $module;
-
-                // Name
-                $slug = str_replace(' ', '_', $name);
-
-                $data[] = [
-                    'name' => $name,
-                    'slug' => $slug,
-                    'module' => $module,
-                    'action_name' => $actionName,
-                    'action' => $actionData['controller']
-                ];
-            }
-        }
-
-        Permission::upsert($data, ['slug'], ['slug']);
-    }
-
     /**
      * Execute the console command.
      *
@@ -99,10 +40,30 @@ class GeneratePermission extends Command
     public function handle(): int
     {
         try {
-            $this->generatePermissionFromRoute();
+            $this->info('Starting generate Permission');
+            $this->line('');
+
+            // If force option equal true then truncate permission table
+            if ($this->option('force')) {
+                Permission::truncate();
+            }
+            $data = getPermissionsFromRoute();
+            Permission::upsert($data, ['slug'], ['slug']);
+
+            $this->info('Generate Permission Success');
+
+            // Show info
+            foreach ($data as $key => $item) {
+                $content = ($key + 1).'||'.$item['name'].'||'.$item['slug'].'||'.$item['action'];
+                $row = str_repeat('=', strlen($content));
+                $this->line($row);
+                $this->info($content);
+            }
 
             return 1;
         } catch (\Exception $e) {
+            $this->error('Generate Permission Failed');
+
             return 0;
         }
     }
