@@ -12,19 +12,6 @@ trait HasRole
     /**
      * @return BelongsToMany
      */
-    public function permissions(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Permission::class,
-            'permission_user',
-            'user_id',
-            'permission_id'
-        );
-    }
-
-    /**
-     * @return BelongsToMany
-     */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -36,12 +23,33 @@ trait HasRole
     }
 
     /**
-     * Get user's permissions via role
+     * Get permission model
+     *
+     * @return mixed
+     */
+    protected function getPermissionModel()
+    {
+        return app(config('permissions.models.permission'));
+    }
+
+    /**
+     * Get role model
+     *
+     * @return mixed
+     */
+    protected function getRoleModel()
+    {
+        return app(config('permissions.models.role'));
+    }
+
+    /**
+     * Get all permissions of user
      *
      * @return Collection
      */
-    public function getPermissionsViaRoles(): Collection
+    public function getAllPermissions(): Collection
     {
+        $primaryKey = $this->getPermissionModel()->getKeyName();
         $permissions = collect([]);
 
         if (empty($this->roles) || $this->roles->count() === 0) {
@@ -52,23 +60,7 @@ trait HasRole
             $permissions = $permissions->merge($role->permissions);
         }
 
-        return $permissions->unique('id');
-    }
-
-    /**
-     * Get all user's permissions
-     *
-     * @return Collection
-     */
-    public function getAllPermissions(): Collection
-    {
-        $permissions = $this->getPermissionsViaRoles();
-
-        if (empty($this->permissions) || $this->permissions->count() === 0) {
-            return $permissions;
-        }
-
-        return $permissions->merge($this->permissions)->unique('id');
+        return $permissions->unique($primaryKey);
     }
 
     /**
@@ -78,21 +70,7 @@ trait HasRole
      */
     public function getAllActions(): array
     {
-        return $this->getAllPermissions()->map(function ($permission) {
-            return $permission->action;
-        })->toArray();
-    }
-
-    /**
-     * Get actions via roles
-     *
-     * @return array
-     */
-    public function getActionsViaRoles(): array
-    {
-        return $this->getPermissionsViaRoles()->map(function ($permission) {
-            return $permission->action;
-        })->toArray();
+        return $this->getAllPermissions()->pluck('action')->toArray();
     }
 
     /**
@@ -114,7 +92,7 @@ trait HasRole
     /**
      * Check user has a all action
      *
-     * @param  mixed  ...$actions
+     * @param mixed ...$actions
      *
      * @return bool
      */
@@ -128,7 +106,7 @@ trait HasRole
     /**
      * Check user has a all action
      *
-     * @param  mixed  ...$actions
+     * @param mixed ...$actions
      *
      * @return bool
      */
@@ -142,7 +120,7 @@ trait HasRole
     /**
      * Check user has all permission in list
      *
-     * @param  mixed  ...$permissions
+     * @param mixed ...$permissions
      *
      * @return bool
      */
@@ -162,7 +140,7 @@ trait HasRole
     /**
      * Check user has any permission in list
      *
-     * @param  mixed  ...$permissions
+     * @param mixed ...$permissions
      *
      * @return bool
      */
@@ -198,13 +176,13 @@ trait HasRole
             return false;
         }
 
-        return $this->getAllPermissions()->contains('id', $permission->id);
+        return $this->getAllPermissions()->contains($permission->getKeyName(), $permission->getKey());
     }
 
     /**
      * Check user has all role in list
      *
-     * @param  mixed  ...$roles
+     * @param mixed ...$roles
      *
      * @return bool
      */
@@ -224,7 +202,7 @@ trait HasRole
     /**
      * Check user has any role in list
      *
-     * @param  mixed  ...$roles
+     * @param mixed ...$roles
      *
      * @return bool
      */
@@ -258,7 +236,7 @@ trait HasRole
             return false;
         }
 
-        return $this->roles->contains('id', $role->id);
+        return $this->roles->contains($role->getKeyName(), $role->getKey());
     }
 
     /**
@@ -270,14 +248,18 @@ trait HasRole
      */
     public function getPermissionByKey($key)
     {
-        /** Integer: find by id */
+        $permissionModel = $this->getPermissionModel();
+
+        /** Integer: find by primary key */
         if (is_int($key)) {
-            return Permission::find($key);
+            return $permissionModel->find($key);
         }
 
-        /** String: find by slug || id */
+        /** String: find by slug || primary key */
         if (is_string($key)) {
-            return (Permission::where('slug', $key)->first() ?? Permission::where('id', $key)->first());
+            $permission = $permissionModel->where('slug', $key)->first();
+
+            return $permission ?? $permissionModel->where($permissionModel->getKeyName(), $key)->first();
         }
 
         /** Object: if not instance of Permission -> null */
@@ -285,8 +267,8 @@ trait HasRole
             return null;
         }
 
-        /** Find element has id equal $key id*/
-        return Permission::find($key->id ?? null);
+        /** Find element has id equal $key primary key*/
+        return $permissionModel->find($key->getKey() ?? null);
     }
 
     /**
@@ -298,23 +280,27 @@ trait HasRole
      */
     public function getRoleByKey($key)
     {
+        $roleModel = $this->getRoleModel();
+
         /** Integer: find by id */
         if (is_int($key)) {
-            return Role::find($key);
+            return $roleModel->find($key);
         }
 
         /** String: find by slug || id */
         if (is_string($key)) {
-            return (Role::where('slug', $key)->first() ?? Role::where('id', $key)->first());
+            $role = $roleModel->where('slug', $key)->first();
+
+            return $role ?? $roleModel->where($roleModel->getKeyName(), $key)->first();
         }
 
         /** Object: if not instance of Role -> null */
-        if (!$key instanceof Role) {
+        if (!$key instanceof $roleModel) {
             return null;
         }
 
-        /** Find element has id equal $key id*/
-        return Role::find($key->id ?? null);
+        /** Find element has primary key equal $key primary key*/
+        return $roleModel->find($key->getKey() ?? null);
     }
 
     /**

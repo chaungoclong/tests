@@ -1,0 +1,19 @@
+{
+    "name": "longtnt/simple-permission",
+    "description": "Simple Permission",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Longtnt\\SimplePermission\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Châu Ngọc Long",
+            "email": "longcn@beetsoft.com.vn"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {}
+}

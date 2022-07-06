@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::resource('users', \App\Http\Controllers\UserController::class)
-    ->middleware('has_any_permission:index_user,create_user,test');
+    ->middleware(['check_permission', 'has_all_role:employee,manager,admin']);
 Route::resource('test', \App\Http\Controllers\TestAbcController::class)
-    ->middleware(['has_any_role:employee,super_admin','has_any_permission:index_user,update_user']);
+    ->middleware(['check_permission']);
 
 Route::get('/', function () {
     auth()->logout();
